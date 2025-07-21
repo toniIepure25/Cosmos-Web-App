@@ -1,3 +1,1 @@
-FROM nginx:alpine
-WORKDIR /
-COPY . .
+FROM node:18-alpine AS base",
