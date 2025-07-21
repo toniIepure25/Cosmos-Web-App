@@ -1,7 +1,0 @@
-version: '3.7'
-services:
-  app:
-    image: {here the needed image}
-    ports:
-      - '3000'
-    # Add any other necessary configurations here
