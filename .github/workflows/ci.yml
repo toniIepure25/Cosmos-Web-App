@@ -1,4 +1,32 @@
-{
-  "filename": ".github/workflows/ci.yml",
-  "content": "name: CI Pipeline\non: [push, pull_request]\n\njobs:\n  build-test-lint:\n    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    steps:\n    - name: Checkout code\n      uses: actions/checkout@v4\n\n    # ENVIRONMENT SETUP\n    - name: Setup Docker\n      run: |\n        docker-compose build\n      # COMMENT: Setting up Docker environment\n\n    # LINTING STAGE\n    - name: Run Dockerlint\n      run: |\n        docker run -i hadolint/hadolint < Dockerfile\n      # COMMENT: Auto-configured since no linter present\n\n    # BUILD STAGE\n    - name: Build Docker image\n      run: |\n        docker build . -t myimage\n      # QUALITY GATE: Fails on build errors\n"
-}
+name: CI Pipeline
+on: [push, pull_request]
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # ENVIRONMENT SETUP
+    - name: Setup Docker
+      uses: docker/setup-action@v2
+
+    # LINTING STAGE
+    - name: Run Linting Scripts
+      run: |
+        docker-compose -f docker-compose.yml run linting
+      # QUALITY GATE: Fails on linting errors
+
+    # BUILD STAGE
+    - name: Build Docker Image
+      run: |
+        docker build -t myapp .
+      # QUALITY GATE: Fails on build errors
+
+    # TEST STAGE
+    - name: Run Validation Checks
+      run: |
+        docker-compose -f docker-compose.yml run validation
+      # QUALITY GATE: Fails on test failures
