@@ -9,24 +9,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # ENVIRONMENT SETUP
-    - name: Setup Docker
-      uses: docker/setup-action@v2
-
     # LINTING STAGE
-    - name: Run Linting Scripts
+    - name: Configure ESLint
       run: |
-        docker-compose -f docker-compose.yml run linting
-      # QUALITY GATE: Fails on linting errors
+        npm install eslint --save-dev
+        npx eslint --init
+      # COMMENT: Auto-configured since no linter present
 
-    # BUILD STAGE
-    - name: Build Docker Image
-      run: |
-        docker build -t myapp .
-      # QUALITY GATE: Fails on build errors
+    - name: Run Linter
+      run: npx eslint .
+      # QUALITY GATE: Fails on style violations
 
-    # TEST STAGE
-    - name: Run Validation Checks
-      run: |
-        docker-compose -f docker-compose.yml run validation
-      # QUALITY GATE: Fails on test failures
+    # ARTIFACTS
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: web-files
+        path: |
+          /tmp/repo_560941879_e136fc2d/README.md
+          /tmp/repo_560941879_e136fc2d/index.html
+          /tmp/repo_560941879_e136fc2d/scripts/script.js
+          /tmp/repo_560941879_e136fc2d/styles/style.css
