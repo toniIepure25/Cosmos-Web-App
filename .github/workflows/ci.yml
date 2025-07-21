@@ -1,43 +1,4 @@
-name: CI Pipeline
-on: [push, pull_request]
-
-jobs:
-  build-test-lint:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    # ENVIRONMENT SETUP
-    - name: Setup Docker
-      run: docker setup
-
-    # DEPENDENCY CACHING
-    - name: Cache Docker dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          /root/.docker
-          /usr/local/bin/docker
-        key: ${{ runner.os }}-docker-${{ hashFiles('Dockerfile') }}
-        
-    # LINTING STAGE
-    - name: Configure Docker Linter
-      run: |
-        docker run --rm -i hadolint/hadolint < Dockerfile
-      # COMMENT: Auto-configured since no linter present
-    
-    - name: Run Linter
-      run: docker run --rm -i hadolint/hadolint < Dockerfile
-      # QUALITY GATE: Fails on lint violations
-
-    # BUILD STAGE
-    - name: Build Docker image
-      run: docker build -t myapp .
-      # QUALITY GATE: Fails on build failures
-
-    # TEST STAGE
-    - name: No specific test commands provided by project
-      run: echo "No tests configured"
-      # QUALITY GATE: Fails due to missing test commands
+{
+  "filename": ".github/workflows/ci.yml",
+  "content": "name: CI Pipeline\non: [push, pull_request]\n\njobs:\n  build-test-lint:\n    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    steps:\n    - name: Checkout code\n      uses: actions/checkout@v4\n\n    # ENVIRONMENT SETUP\n    - name: Setup Docker\n      run: |\n        docker-compose build\n      # COMMENT: Setting up Docker environment\n\n    # LINTING STAGE\n    - name: Run Dockerlint\n      run: |\n        docker run -i hadolint/hadolint < Dockerfile\n      # COMMENT: Auto-configured since no linter present\n\n    # BUILD STAGE\n    - name: Build Docker image\n      run: |\n        docker build . -t myimage\n      # QUALITY GATE: Fails on build errors\n"
+}
