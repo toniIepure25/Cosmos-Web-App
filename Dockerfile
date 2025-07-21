@@ -1,0 +1,1 @@
+FROM nginx:latest\n# Install build essentials\nRUN apt-get update && apt-get install -y --no-install-recommends gcc curl make\n# Create work directory\nWORKDIR /app\n# Copy files\nCOPY . .\n# Expose port 80\nEXPOSE 80\n# Start server\nCMD ['nginx', '-g', 'daemon off;']
