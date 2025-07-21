@@ -1,4 +1,6 @@
-Based on the provided information, the project appears to be a static website served by Nginx and containerized using Docker, orchestrated with Docker Compose. The CI configuration will therefore focus on building the Docker image and validating the Docker Compose configuration. Here's a YAML configuration suitable for that setup:
+Based on the provided project structure and metadata, I'll create a CI configuration using GitHub Actions to build and test the static web application within a Docker environment. Since there is no build tool specified, and it relies on Docker, we'll use Docker-related steps and validating configurations with `docker-compose`.
+
+Here's a CI configuration YAML file that aligns with your specifications:
 
 
 # FILENAME: .github/workflows/ci.yml
@@ -6,45 +8,54 @@ name: CI Pipeline
 on: [push, pull_request]
 
 jobs:
-  build-and-validate:
+  build-test-docker:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-  
+
+    # ENVIRONMENT SETUP
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-      
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-          
-    # BUILD STAGE
-    - name: Build Docker image
-      run: docker build . -t nginx-static-website
-      # QUALITY GATE: Fails on build errors
 
-    # VALIDATION STAGE
-    - name: Validate Docker Compose configuration
+    # LINTING/STAGE (Alternative step due to lack of traditional linter)
+    - name: Validate Dockerfile syntax
+      uses: docker/dockerfile-lint-action@v1
+      with:
+        file: Dockerfile
+
+    - name: Validate Docker Compose syntax
       run: docker-compose config
       # QUALITY GATE: Fails on invalid configuration
 
-    # OPTIONAL: ADDITIONAL CHECKS
-    # If more detailed testing is available or required, such as unit or integration tests, they should be included here.
+    # BUILD STAGE
+    - name: Build Docker image
+      run: docker build -t nginx-static-website .
+      # QUALITY GATE: Fails on build errors
+
+    # TEST STAGE
+    - name: Test Docker Compose configuration
+      run: docker-compose up -d --build && docker-compose down
+      # QUALITY GATE: Fails on runtime errors
+
+    # POST-TEST CLEANUP
+    - name: Clean up Docker images
+      run: docker-compose down --rmi all --volumes --remove-orphans
+    
+    # COMMENT: The steps validate Dockerfile syntax, ensure the docker-compose file is valid, build the Docker image, and test by running the composed services, then cleanup.
 
 
+### Notes:
 
-### Configuration Details:
-- **Checkout Code**: Uses GitHub's checkout action to clone the repository.
-- **Docker Setup**: Uses the Docker Buildx action to set up Docker for building images.
-- **Caching**: Caches Docker layers to accelerate subsequent builds.
-- **Build Stage**: Builds the Docker image using the provided Dockerfile.
-- **Validation Stage**: Validates the Docker Compose configuration to ensure there are no syntax errors or misconfigurations.
-- **Timeout**: The job is limited to 30 minutes to avoid excessive runtime due to potential issues.
+1. **Environment Setup**: The Docker environment is set up using the `setup-buildx-action`, which helps leverage multi-platform Docker builds (even though not explicitly needed here, it's a good practice).
 
-This configuration captures the essential steps for building and validating a Docker-based static web application. Based on the high confidence level, it adheres closely to the provided CI/CD recommendations and leverages GitHub Actions.
+2. **Linting Alternative**: Since there are no traditional source code linters for JavaScript, HTML, or CSS mentioned, the steps validate Dockerfile and Docker Compose configurations instead.
+
+3. **Build Stage**: The Docker image is built from the Dockerfile using the standard Docker build command.
+
+4. **Test Stage**: Involves spinning up the Docker Compose defined services to ensure they run and then immediately tearing them down to verify runtime validity without leaving resources running.
+
+5. **Post-Test Cleanup**: This cleans up any resources or artifacts created during the test stages.
+
+6. **Timeout**: The entire workflow is protected by a 30-minute timeout to ensure that it doesn't run indefinitely due to unforeseen issues.
