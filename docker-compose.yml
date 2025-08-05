@@ -1,7 +1,10 @@
-version: '3.8'
 services:
   app:
-    image: {here the needed image}
+    image:
+      here the needed image: null
+    labels:
+    - com.yourdomain.project.id=6891bd355c267b0d3786f8cc
     ports:
-      - "3000"
+    - '3000'
     working_dir: /
+version: '3.8'
